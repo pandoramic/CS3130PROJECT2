@@ -1,8 +1,4 @@
-/*
- * Cassie Short CS3130
- */
-
-import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CS3130PROJECT2 {
     public static void main(String[] args) {
@@ -12,23 +8,20 @@ public class CS3130PROJECT2 {
         int descArr[] = new int[1000];
         int ascArr[] = new int[1000];
 
-        // Create random number generator for random array and variable to reverse for-loop index for descending array
-        Random rand = new Random();
+        // Create variable to reverse for-loop index for descending array
         int reverse = 1000;
 
-        // Fill arrays with data
+        // Fill arrays with data and print it 20 numbers per line, separated by commas
         System.out.println("Unsorted Array:");
         for (int i = 0; i < randArr.length; i++) {
-            randArr[i] = (int)(Math.random() * 1000) + 1;
-            // Use index + 1 to fill ascending array with consecutive integers between 1 and 1000
-            ascArr[i] = i + 1;
-            descArr[i] = reverse;
-            // Print unsorted random array 
+            randArr[i] = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
+            ascArr[i] = i + 1;  // Use index + 1 to fill ascending array with consecutive integers between 1 and 1000
+            descArr[i] = reverse;   // Use variable with decrementing value to fill descending array
             if (i % 20 == 0 && i != 0) {
                 System.out.print("\n");
             }
-            System.out.format("%4d, ", randArr[i]);
-            reverse--;
+            System.out.format("%4d, ", randArr[i]); // Print formatted numbers with a width of 4 to even out tables
+            reverse--; // Decrement variable filling descending array with each iteration of the for-loop
         }
         System.out.print("\n\n");
 
@@ -61,6 +54,8 @@ public class CS3130PROJECT2 {
         randSort(randomSort.descending, 0, randomSort.descending.arr.length - 1);
         print(randomSort);
 
+        // Every
+
         // Pass each array to the median of three quicksort, which chooses the median element of
         // three randomly chosen indices to use as the pivot
         medianThree(medOfThree.random, 0,medOfThree.random.arr.length - 1);
@@ -75,6 +70,7 @@ public class CS3130PROJECT2 {
         medianFive(medOfFive.descending, 0, medOfFive.descending.arr.length - 1);
         print(medOfFive);
 
+        // Print summary of each sort, omitting sorted arrays
         System.out.println("\nSummarized Quicksort Data:\n");
         summary(quickSort);
         summary(randomSort);
@@ -82,34 +78,55 @@ public class CS3130PROJECT2 {
         summary(medOfFive);
     }
 
+    // Perform original quicksort. Function calls upon "sort" function, which uses last element in array as pivot.
+    // All other functions of quicksort switch their chosen pivot to the last element and use the same sort function
     private static void qSort(Counter obj, int low, int high)    {
-        long startTime = System.nanoTime();
+
+        long startTime = System.nanoTime(); // Start timer for function
+
+        // If the left bound of the subarray hasn't met the right bound, ie. the array isn't empty, perform partitioning
         if(low < high) {
+            // Perform sort function, which moves values to the correct side of the pivot before returning the new partition index
             int partition = sort(obj, low, high);
-            qSort(obj, low, (partition - 1));
-            qSort(obj, (partition + 1), high);
+
+            qSort(obj, low, (partition - 1));   // Recursively call qSort for left half of subarray
+            qSort(obj, (partition + 1), high);  // Recursively call qSort for right half of subarray
         }
-        long endTime = System.nanoTime();
+        long endTime = System.nanoTime();   // End timer for function and calculate duration to store in time attribute
         obj.time = endTime - startTime;
     }
 
     private static void randSort(Counter obj, int low, int high) {
-        long startTime = System.nanoTime();
+
+        long startTime = System.nanoTime(); // Start timer for function
+
+        // If the left bound of the subarray hasn't met the right bound, ie. the array isn't empty, perform partitioning
         if(low < high) {
-            int pivIndex = (int)(Math.random() * (high - low + 1)) + low;
-            swap(obj, pivIndex, high);
+            int pivIndex = ThreadLocalRandom.current().nextInt(low, high + 1);
+            swap(obj, pivIndex, high);  // Swap pivot value into last element to be used in sort function
+
+            // Perform sort function, which moves values to the correct side of the pivot before returning the new partition index
             int partition = sort(obj, low, high);
-            randSort(obj, low, (partition - 1));
-            randSort(obj, (partition + 1), high);
+            randSort(obj, low, (partition - 1));    // Recursively call randSort for left half of subarray
+            randSort(obj, (partition + 1), high);   // Recursively call randSort for right half of subarray
+
         }
-        long endTime = System.nanoTime();
+        long endTime = System.nanoTime(); // End timer for function and calculate duration to store in time attribute
         obj.time = endTime - startTime;
     }
 
     private static void medianThree(Counter obj, int low, int high) {
-        long startTime = System.nanoTime();
+
+        long startTime = System.nanoTime(); // Start timer for function
+
+        // If the subarray falls to less than 3 elements, don't find median of 3 pivots, just use rightmost element
         if((high - low) >= 3) {
-            int pivots[] = new Random().ints(low, high + 1).distinct().limit(3).toArray();
+
+            // Create and fill array of unique pivot indices, generated by randomizePivots()
+            int pivots[] = new int [3];
+            pivots = randomizePivots(pivots, low, high, 3);
+
+            obj.comparisons++;  // Increment comparisons for each step while finding median of three possible pivots
             if (obj.arr[pivots[0]] > obj.arr[pivots[1]]) {
                 swap(obj, pivots[0], pivots[1]);
             }
@@ -121,22 +138,33 @@ public class CS3130PROJECT2 {
             if (obj.arr[pivots[1]] > obj.arr[pivots[2]]) {
                 swap(obj, pivots[1], pivots[2]);
             }
-            obj.comparisons++;
             swap(obj, pivots[1], high);
         }
+
+        // If the left bound of the subarray hasn't met the right bound, ie. the array isn't empty, perform partitioning
         if(low < high) {
+            // Perform sort function, which moves values to the correct side of the pivot before returning the new partition index
             int partition = sort(obj, low, high);
             medianThree(obj, low, (partition - 1));
             medianThree(obj, (partition + 1), high);
         }
-        long endTime = System.nanoTime();
+
+        long endTime = System.nanoTime();   // End timer for function and calculate duration to store in time attribute
         obj.time = endTime - startTime;
     }
 
     private static void medianFive(Counter obj, int low, int high)  {
-        long startTime = System.nanoTime();
+
+        long startTime = System.nanoTime(); // Start timer for function
+
+        // If the subarray falls to less than 5 elements, don't find median of 5 pivots, just use rightmost element
         if((high - low) >= 5) {
-            int pivots[] = new Random().ints(low, high + 1).distinct().limit(5).toArray();
+
+            // Create and fill array of unique pivot indices, generated by randomizePivots()
+            int pivots[] = new int[5];
+            pivots = randomizePivots(pivots, low, high, 5);
+
+            obj.comparisons++;  // Increment comparisons for each step while finding median of five possible pivots
             if (obj.arr[pivots[0]] > obj.arr[pivots[1]]) {
                 swap(obj, pivots[0], pivots[1]);
             }
@@ -155,43 +183,77 @@ public class CS3130PROJECT2 {
             }
             obj.comparisons++;
             if (obj.arr[pivots[1]] < obj.arr[pivots[2]]) {
+                obj.comparisons++;
                 if (obj.arr[pivots[2]] < obj.arr[pivots[4]]) {
                     swap(obj, high, pivots[2]);
                 } else {
                     swap(obj, high, pivots[4]);
                 }
-                obj.comparisons++;
             } else {
+                obj.comparisons++;
                 if (obj.arr[pivots[1]] < obj.arr[pivots[3]]) {
                     swap(obj, high, pivots[1]);
                 } else {
                     swap(obj, high, pivots[3]);
                 }
-                obj.comparisons++;
             }
             obj.comparisons++;
         }
+
+        // If the left bound of the subarray hasn't met the right bound, ie. the array isn't empty, perform partitioning
         if(low < high) {
             int partition = sort(obj, low, high);
             medianFive(obj, low, (partition - 1));
             medianFive(obj, (partition + 1), high);
         }
-        long endTime = System.nanoTime();
+
+        long endTime = System.nanoTime();   // End timer for function and calculate duration to store in time attribute
         obj.time = endTime - startTime;
     }
 
     private static int sort(Counter obj, int low, int high)   {
+        // Gather the pivot and set the starting point for the partition to one index less than the leftmost element in the subarray
         int pivot = obj.arr[high];
         int partition = low - 1;
+
+        // For each index, check if the related element is less than the pivot, if it is, swap it with the element
+        // at index partition to move smaller values to the left
         for (int j = low; j < high; j++) {
             if (obj.arr[j] <= pivot) {
-                partition += 1;
+                partition += 1; // Increase the partition each iteration to shorten the subarray that needs to be sorted
                 swap(obj, partition, j);
             }
             obj.comparisons++;
         }
+        // Swap the element at the index of partition + 1 and the rightmost element of the subarray
         swap(obj, (partition + 1), high);
-        return (partition + 1);
+        return (partition + 1); // Return the new partition to use in the next function call
+    }
+
+    private static int[] randomizePivots(int[] pivots, int low, int high, int medianNumber)    {
+
+        // Generate a random number for the pivots index then check that each consecutively populated pivot index is unique
+        pivots[0] = ThreadLocalRandom.current().nextInt(low, high + 1);
+        do {
+            pivots[1] = ThreadLocalRandom.current().nextInt(low, high + 1);
+        } while(pivots[1] == pivots[0]);
+        do {
+            pivots[2] = ThreadLocalRandom.current().nextInt(low, high + 1);
+        } while(pivots[2] == pivots[0] || pivots[2] == pivots[1]);
+
+        // If the variable medianNumber, which holds the  number of pivot indices to choose between, is 5
+        // generate two more unique numbers for the pivots array
+        if(medianNumber == 5) {
+            do {
+                pivots[3] = ThreadLocalRandom.current().nextInt(low, high + 1);
+            } while (pivots[3] == pivots[0] || pivots[3] == pivots[1] || pivots[3] == pivots[2]);
+            do {
+                pivots[4] = ThreadLocalRandom.current().nextInt(low, high + 1);
+            }
+            while (pivots[4] == pivots[0] || pivots[4] == pivots[1] || pivots[4] == pivots[2] || pivots[4] == pivots[3]);
+        }
+
+        return pivots;
     }
 
     // Perform swaps using object and indices to swap
@@ -202,21 +264,8 @@ public class CS3130PROJECT2 {
         obj.swaps++;
     }
 
-    // Check that each possible pivot is unique. Call recursively to check indices that have already been checked when pivot is regenerated
-    private static int redundancyCheck(int[] pivots, int possiblePiv, int high, int low) {
-        for (int i = 0; i < pivots.length; i++) {
-            if (pivots[i] == possiblePiv) {
-                System.out.println(pivots[i] + " Redundancy Pre " + i + " " + possiblePiv);
-                possiblePiv = (int)(Math.random() * (high - low + 1)) + low;
-                System.out.println(pivots[i] + " Redundancy Post " + i + " " + possiblePiv);
-                redundancyCheck(pivots, possiblePiv,  high, low);
-            }
-        }
-        return possiblePiv;
-    }
-
     // Copy arrays populated in main into each objects random, ascending, and descending attributes
-    private static void copyArrs(ArrayType obj, int[] rArr, int[] dArr, int[] aArr)  {
+    private static void copyArrs(ArrayType obj, int[] rArr, int[] aArr, int[] dArr)  {
         obj.random.arr = rArr.clone();
         obj.ascending.arr = aArr.clone();
         obj.descending.arr = dArr.clone();
@@ -225,8 +274,8 @@ public class CS3130PROJECT2 {
     // Print attributes of objects and array with 20 elements per line, separated by commas
     private static void print(ArrayType obj) {
         System.out.println(obj.title + "on Random Array: ");
-        System.out.println("Comparisons: " + obj.random.comparisons + "\nSwaps: " + obj.random.swaps + "\n");
-        System.out.println("This sort took " + obj.random.time + " nanoseconds to complete.\nSorted Array:");
+        System.out.println("Comparisons: " + obj.random.comparisons + "\nSwaps: " + obj.random.swaps);
+        System.out.println("This sort took " + (obj.random.time / 1000000.0) + " milliseconds to complete.\nSorted Array:");
         for (int i = 0; i < obj.random.arr.length; i++) {
             if (i % 20 == 0 && i != 0) {
                 System.out.print("\n");
@@ -236,7 +285,7 @@ public class CS3130PROJECT2 {
         System.out.println("\n");
         System.out.println(obj.title + "on Ascending Array: ");
         System.out.println("Comparisons: " + obj.ascending.comparisons + "\nSwaps: " + obj.ascending.swaps);
-        System.out.println("This sort took " + obj.ascending.time + " nanoseconds to complete.\nSorted Array:");
+        System.out.println("This sort took " + (obj.ascending.time / 1000000.0) + " milliseconds to complete.\nSorted Array:");
         for (int i = 0; i < obj.ascending.arr.length; i++) {
             if (i % 20 == 0 && i != 0) {
                 System.out.print("\n");
@@ -246,7 +295,7 @@ public class CS3130PROJECT2 {
         System.out.print("\n\n");
         System.out.println(obj.title + "on Descending Array: ");
         System.out.println("Comparisons: " + obj.descending.comparisons + "\nSwaps: " + obj.descending.swaps);
-        System.out.println("This sort took " + obj.descending.time + " nanoseconds to complete.\nSorted Array:");
+        System.out.println("This sort took " + (obj.descending.time / 1000000.0)+ " milliseconds to complete.\nSorted Array:");
         for (int i = 0; i < obj.descending.arr.length; i++) {
             if (i % 20 == 0 && i != 0) {
                 System.out.print("\n");
@@ -263,6 +312,7 @@ public class CS3130PROJECT2 {
         System.out.print("\n");
     }
 
+    // Print a summary of all sorting data gathered in Counter variables without sorted arrays, to more easily view swaps/comparisons/time
     private static void summary(ArrayType obj)   {
         System.out.println("\n" + obj.title + "Random Array: ");
         System.out.println("Time: " + (obj.random.time/1000000.0) + "\nComparisons: " + obj.random.comparisons + "\nSwaps: " + obj.random.swaps);
@@ -272,7 +322,6 @@ public class CS3130PROJECT2 {
         System.out.println("Time: " + (obj.descending.time/1000000.0) + "\nComparisons: " + obj.descending.comparisons + "\nSwaps: " + obj.descending.swaps);
     }
 }
-
 
 // Defines attributes of each type of sort object used, with Counter attributes to define each type of array
 class ArrayType  {
